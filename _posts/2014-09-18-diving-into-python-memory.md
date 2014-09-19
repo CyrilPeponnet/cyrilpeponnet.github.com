@@ -104,13 +104,13 @@ A Stanza can be a *Message* or an *IQ* and composed from *Nodes*, Nodes contains
 
 As we can see I have Node and IQ taking a big part of memory. Let’s dig on it.
 
-```
+```python
 In : h[5].domisize
 25025512
 ```
 It seems we have 25MB of IQ stored in memory, this is huge ! (We do not keep any sort of history)
 
-```
+```python
 In : h[5].byid
 Set of 2439 <dict of xmpp.protocol.Iq> objects. Total size = 2556072 bytes.
  Index     Size   %   Cumulative  %   Owner Address
