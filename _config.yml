@@ -1,0 +1,31 @@
+# Dependencies
+markdown:         redcarpet
+pygments:         true
+
+# Permalinks
+permalink:        pretty
+
+# Setup
+title:            YAG'B
+tagline:          '/yag-bee/ noun: Yet Another Geek Blog'
+description:      'My technical stuff and thoughts'
+url:              http://yagb.peponnet.fr
+baseurl:          '/'
+paginate:         5
+
+author:
+  name:           'Cyril Peponnet'
+  url:            https://twitter.com/CyrilPeponnet
+
+# Custom vars
+#version:          1.0.0
+
+#github:
+#  repo:           https://github.com/poole/lanyon
+
+# Custom header layout
+pages_list:
+  Dev:    '/dev'
+  Hard:   '/hard'
+  Misc:   '/Misc'
+  About:  '/about'
