@@ -1,6 +1,7 @@
 ---
 layout: page
 title: About Me
+permalink: about/
 ---
 
 <div style="margin-left: 40%;border: 2px solid #DDD;width: 110px; height:110px;-webkit-border-radius: 50%;-moz-border-radius: 50%;border-radius: 50%;">

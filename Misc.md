@@ -1,6 +1,7 @@
 ---
 layout: page
 title: Misc
+permalink: Misc/
 ---
 {% for post in site.posts %}
   {% if post.category == "Misc" %}
