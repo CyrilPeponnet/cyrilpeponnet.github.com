@@ -4,18 +4,13 @@ category: Dev
 title: Diving into Python Memory to track leak and ballooning
 ---
 
-
-Memory leak in python can’t really happen due to the work done by the [garbage collector](http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection).
-
+Memory leaks in python can’t really happen due to the work done by the [garbage collector](http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection).
 However, ballooning is still possible, and cyclic references sometimes are hard to track.
+Let’s see with a real example how these tools can be useful to track and fix these memory issues.
 
-Fortunately, we can get help from several tools :
+<!--more-->
 
-* [objgraph:](http://mg.pov.lt/objgraph/) A super useful module to visually explore Python object graphs
-* [guppy:](http://guppy-pe.sourceforge.net) A Heap Analysis Toolset
-* [ipdb/ipython:](http://ipython.org) A Powerful interactive python shell
-
-Let’s see with a real example how these tools can be useful to track origin of memory issues.
+## Why this post ?
 
 As a pet project I’m contributing to [Archipel](http://www.archipelproject.org) a virtual machine orchestrator based on libvirt and using XMPP as an underlying communication system (which is really cool !).
 
@@ -24,6 +19,14 @@ This software is based on [xmpppy](http://xmpppy.sourceforge.net) a XMPP python 
 I notice that the main daemons (archipel-agent and archipel-central-agent ) were really eating more and more memory accros the time and sometime took all the available memory (32Gb for a python daemon is pretty *huge* regarding what was really done).
 
 So I needed some tools to see what was really stored in the memory and why it was endlessly growing.
+
+## What's in my Toolbox
+
+A small compilation of tools I found:
+
+* [objgraph:](http://mg.pov.lt/objgraph/) A super useful module to visually explore Python object graphs
+* [guppy:](http://guppy-pe.sourceforge.net) A Heap Analysis Toolset
+* [ipdb/ipython:](http://ipython.org) A Powerful interactive python shell
 
 ## Bring it on !
 
