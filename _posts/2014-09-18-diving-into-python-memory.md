@@ -5,13 +5,13 @@ title: Diving into Python Memory to track leak and ballooning
 ---
 
 
-Memory leak in python can’t really happens due to the work done by the [garbage collector](http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection).
+Memory leak in python can’t really happen due to the work done by the [garbage collector](http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection).
 
 However, ballooning is still possible, and cyclic references sometimes are hard to track.
 
 Fortunately, we can get help from several tools :
 
-* [objgraph:](http://mg.pov.lt/objgraph/) A super usefull module to visually explore Python object graphs
+* [objgraph:](http://mg.pov.lt/objgraph/) A super useful module to visually explore Python object graphs
 * [guppy:](http://guppy-pe.sourceforge.net) A Heap Analysis Toolset
 * [ipdb/ipython:](http://ipython.org) A Powerful interactive python shell
 
@@ -23,11 +23,11 @@ This software is based on [xmpppy](http://xmpppy.sourceforge.net) a XMPP python 
 
 I notice that the main daemons (archipel-agent and archipel-central-agent ) were really eating more and more memory accros the time and sometime took all the available memory (32Gb for a python daemon is pretty *huge* regarding what was really done).
 
-So I needed some tools to see what was really stored in the memory and why I grown endlessly.
+So I needed some tools to see what was really stored in the memory and why it was endlessly growing.
 
 ## Bring it on !
 
-This issue is quite hard to reproduce as we have to wait enough time to see what is eating the memory.
+This issue is quite hard to reproduce as we have to wait long enough to see what is eating the memory.
 
 So first thing was to add an ipdb trace handler (so I can fire up ipdb console whenever I wanted to) by adding the following code to the main program loop:
 
@@ -49,9 +49,9 @@ So first thing was to add an ipdb trace handler (so I can fire up ipdb console w
 
 This way, each time I hit **ctrl+c**, it raises an ipdb console (and also showing the actual state of memory).
 
-From this prompt, I can use whatever python thing to track and understand where the issue hide.
+From this prompt, I can use whatever python thing to track and understand where the issue is hiding.
 
-**TIPS:*** to be able to write multilines function you can run inside your ipdb prompt type the following:
+**TIP:** to be able to write multilines function I can run the following inside my ipdb prompt type:
 
 ``` python
 !import code; code.interact(local=vars())
@@ -61,7 +61,7 @@ From there I can start to inspect the memory using [guppy](http://guppy-pe.sourc
 
 ## Clean the dust
 
-First of all, you should clean everything cleanable using the garbage collector and only after that you can have some informations about the memory taken by your process.
+First of all, I should clean everything that I can using the garbage collector and only after that I can have some information about the memory taken by my process.
 
 ```python
 >>> import gc
@@ -70,11 +70,11 @@ First of all, you should clean everything cleanable using the garbage collector 
 >>> resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 64316
 ```
-Now let’s digg on memory.
+Now let’s dig on memory.
 
-## These are not the droids you are looking for
+## These are not the droids you are looking for...
 
-With [guppy](http://guppy-pe.sourceforge.net) you can print the heap:
+With [guppy](http://guppy-pe.sourceforge.net) I can print the current heap:
 
 ```python
 In : import guppy
@@ -96,19 +96,19 @@ Partition of a set of 343006 objects. Total size = 59627592 bytes.
 <830 more rows. Type e.g. '_.more' to view.>
 ```
 
-As you can see, there is a lot of strings/dicts... but hold on, what are we really looking for ?
+As you can see, there is a lot of strings/dicts... but hold on, what am I really looking for ?
 
-Our daemons are quite simple manipulate XML objects, receive and send XMPP stanza (which are also XML objects) and that's all, so we will digg on these items.
+My daemons are quite simple: they manipulate XML objects, receive and send XMPP stanzas (which are also XML objects) and that's all, so I will dig on these items.
 
 A Stanza can be a *Message* or an *IQ* and composed from *Nodes*, Nodes contains *dicts* and dicts contains *strings*.
 
-As we can see we have Node and IQ taking a big part of memory. Let’s dig on it
+As we can see I have Node and IQ taking a big part of memory. Let’s dig on it.
 
 ```
 In : h[5].domisize
 25025512
 ```
-It seems we have 25MB of IQ stored in memory, this is huge ! (We do not keep an sort of history)
+It seems we have 25MB of IQ stored in memory, this is huge ! (We do not keep any sort of history)
 
 ```
 In : h[5].byid
@@ -127,9 +127,9 @@ Set of 2439 <dict of xmpp.protocol.Iq> objects. Total size = 2556072 bytes.
 <2429 more rows. Type e.g. '_.more' to view.>
 ```
 
-2500 object of size 1048, interresting… Let’s use [objgraph](http://mg.pov.lt/objgraph/) now to get more information about relationship
+2500 object of size 1048, interesting… Let’s use [objgraph](http://mg.pov.lt/objgraph/) now to get more information about relationships.
 
-With [objgraph](http://mg.pov.lt/objgraph/) you can walk through object types like this:
+With [objgraph](http://mg.pov.lt/objgraph/) I can walk through object types like this:
 
 ```python
 import objgraph
@@ -146,7 +146,7 @@ Iq                         2512
 builtin_function_or_method 1759
 ```
 
-So here we can see that we have a lot of Iq objects as we saw previously. Let’s see what are they:
+So here we can see that I have a lot of Iq objects as we saw previously. Let’s see what they are:
 
 ```python
 In: for iq in objgraph.by_type('Iq'): print iq
@@ -162,9 +162,9 @@ In: for iq in objgraph.by_type('Iq'): print iq
 
 ---snip---
 
-It's Iq responses… there is a lot of them almost identical (except the id) they *should* be cleaned by the GC, but it's not the case, they must have some pending references, let's see whitch are the hodlers.
+It's Iq responses… there are a lot of them almost identical (except the id) they *should* be cleaned by the GC, but it's not the case, they must have some pending references, let's see which are the holders.
 
-Objgraph can generate pretty usefull graph regarding references:
+Objgraph can generate pretty useful graphes regarding references:
 
 ```python
 In : objgraph.show_backrefs(objgraph.by_type('Iq')[0], filename="/vagrant/g.png",refcounts=True, max_depth=5)
@@ -179,7 +179,7 @@ Here is the result:
 </p>
 
 
-Oh a Cyclic reference (in red) ! Normally the garbage collector should take care of that, but it is strongly recommended to deal with them at the source. There is plenty of way to fix this, I choose to use the [Weakref](https://docs.python.org/2/library/weakref.html).
+Oh a Cyclic reference (in red) ! Normally the garbage collector should take care of that, but it is strongly recommended to deal with them at the source. There are plenty of ways to fix this, I choose to use the [Weakref](https://docs.python.org/2/library/weakref.html).
 
 Parent object are now weakref.proxy and the garbage collector can clean everything easily.
 
@@ -187,7 +187,7 @@ Parent object are now weakref.proxy and the garbage collector can clean everythi
 
 ## Straight to the root
 
-I thought fixing the cyclic reference issue would fix all the memory eating but not. Something is still eating my memory ! And using the same tools as before I just figure out that I still have a tons of IQ hanging in memory. Using objgraph again helps a lot to find the real source:
+I thought fixing the cyclic reference issue would fix all the memory eating but it does not. Something is still eating my memory ! And using the same tools as before I just figured out that I still have tons of IQ hanging in memory. Using objgraph again helps a lot to find the real source:
 
 
 ```python
@@ -201,7 +201,7 @@ Image generated as /vagrant/g.png
 </p>
 
 
-This is interesting… but wait we also have a bunch of Message hanging (Message is a type of IQ). Let’s see what’s behind and if it’s related to the previous one:
+This is interesting… but wait, I also have a bunch of Messages hanging (Message is a type of IQ). Let’s see what’s behind and if it’s related to the previous one:
 
 ```python
 In : objgraph.show_backrefs(objgraph.by_type('Message')[:5],max_depth=8, filename="/vagrant/g.png")
@@ -215,11 +215,11 @@ Image generated as /vagrant/g.png
 
 What a mess !
 
-As we can see, the *Dispatcher* instance keep a list of every stanza dispatched (and actually most of them are related to callbacks).
+As we can see, the *Dispatcher* instance keeps a list of every stanza dispatched (and actually most of them are related to callbacks).
 
 For the record, a *closure* contains a *cell* which contains details of the *variables defined in the enclosing scope*.
 
-So as we can read in this diagram, **xmpp.dispatcher.Dispatcher** instance, has an dict attribute named *_expected* and this attribute contain **every** IQ/Messages (identify with ID as key) sent and pending for a response.
+So as we can read in this diagram, **xmpp.dispatcher.Dispatcher** instance, has an dict attribute named *_expected* and this attribute contain **every** IQ/Message (identified with ID as key) sent and pending for a response.
 
 I took a look to the xmpppy library and I found that in specific case of the *Dispatcher.Dispatch*, the `session._expected[ID]` was never cleaned. I smartly add a `del session._expected[ID]` just after all have been processed and tada, no more memory leak !
 
@@ -232,11 +232,11 @@ In : print 'Memory : %s (kb) with %s Node %s iq %s message %s dict' % (resource.
 Memory : 115188 (kb) with 377 Node 0 iq 0 message 11235 dict
 ```
 
-We can see that our previous fix works as we don't have any IQ/Message hanging.
+We can see that our previous fix works since we don't have any IQ/Messages hanging.
 
-But I still have Nodes, I know that we are using the simplexml object to deal with XML file (libvirt domain definition for example) so let’s see what these nodes are.
+But I still have Nodes, I know that we are using the simplexml object to deal with XML files (libvirt domain definition for example) so let’s see what these nodes are.
 
-First I try to filter the parent nodes (as nodes can have leaf nodes and parent node with:
+First I try to filter the parent nodes (as nodes can have leaf nodes and parent nodes):
 
 ```python
 In : topNodes=[]
@@ -247,7 +247,7 @@ In : len(topNodes)
 70
 ```
 
-So we have 70 Nodes lefts (on 377) without parents, let’s sort them and count them by .name attribute
+So we have 70 Nodes left (out of 377) without parents, let’s sort them and count them by .name attribute
 
 ```python
 In:  topNodesByName=sorted(topNodes, key=lambda node: node.name)
@@ -259,9 +259,9 @@ In : NodeCount
 {'domain': 5, 'features': 6, 'success': 6, 'iq': 11, 'capabilities': 2, 'item': 34, 'groups': 2, 'stream:stream': 11, 'users': 2}
 ```
 
-We see that Node with *item* as **name** is almost 50% of the Nodes, let’s see how they are referenced:
+We see that Node with *item* as **name** represent almost 50% of the Nodes, let’s see how they are referenced:
 
-Gather the item togethers
+Gather the item together:
 
 ```python
 In : items=[]
@@ -270,7 +270,7 @@ In : for item in topNodesByName:
 ...:            items.append(item)
 ```
 
-Let’s pick one and find it’s index:
+Let’s pick one and find its index:
 
 
 ```python
@@ -281,7 +281,7 @@ In: del topNodeByName
 In: del items
 ```
 
-**Note:** before generating graph you must del every intermediate values (topNodes….) as they could appear in the graph also...
+**Note:** before generating graph I must delete every intermediate values (topNodes….) as they could appear in the graph also...
 
 Now generate the chain of back references:
 
@@ -329,4 +329,4 @@ All seems fine, we have a lot of str and dict but nothing relevant.
 
 ### Final word
 
-It could sound easy to fix like this but theses issues gave me some hard time...
+It could sound like an easy fix, but these issues gave me a hard time...
