@@ -184,7 +184,7 @@ Here is the result:
 
 Oh a Cyclic reference (in red) ! Normally the garbage collector should take care of that, but it is strongly recommended to deal with them at the source. There are plenty of ways to fix this, I choose to use the [Weakref](https://docs.python.org/2/library/weakref.html).
 
-Parent object are now weakref.proxy and the garbage collector can clean everything easily.
+Parent object are now weakref.proxy and the garbage collector can clean everything easily as you can see [here](https://github.com/ArchipelProject/xmpppy/commit/96eff7d714b6f60d6176c60cb2665e4717159a30)
 
 
 
@@ -224,7 +224,7 @@ For the record, a *closure* contains a *cell* which contains details of the *var
 
 So as we can read in this diagram, **xmpp.dispatcher.Dispatcher** instance, has an dict attribute named *_expected* and this attribute contain **every** IQ/Message (identified with ID as key) sent and pending for a response.
 
-I took a look to the xmpppy library and I found that in specific case of the *Dispatcher.Dispatch*, the `session._expected[ID]` was never cleaned. I smartly add a `del session._expected[ID]` just after all have been processed and tada, no more memory leak !
+I took a look to the xmpppy library and I found that in specific case of the *Dispatcher.Dispatch*, the `session._expected[ID]` was never cleaned. I smartly add a `del session._expected[ID]` [here](https://github.com/ArchipelProject/xmpppy/commit/35c77e4508de851bc5db66c54fe055b4d56d3f1b) just after all have been processed and tada, no more memory leak !
 
 ## Are we done ?
 
