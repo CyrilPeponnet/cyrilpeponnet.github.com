@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Dev
-permalink: Dev/
+permalink: dev/
 ---
 {% for post in site.posts %}
   {% if post.category == "Dev" %}

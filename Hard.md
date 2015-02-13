@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Hard
-permalink: Hard/
+permalink: hard/
 ---
 {% for post in site.posts %}
   {% if post.category == "Hard" %}
