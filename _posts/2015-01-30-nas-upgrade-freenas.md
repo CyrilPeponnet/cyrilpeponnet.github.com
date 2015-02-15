@@ -4,13 +4,13 @@ category: Hard
 title: NAS Upgrade - Synology or Freenas?
 ---
 
-In order to replace my old [Netgear Readynas DUO v1](http://support.netgear.com/product/RND2000v1+$28ReadyNAS+Duo+v1$29), I spent a lot of time to choose the right NAS for home purpose. Synology NAS are great products but expensives if you need more than two disks. Few month ago I made a great deal buying a [HP n54l gen7](http://www8.hp.com/au/en/products/proliant-servers/product-detail.html?oid=6280789) on amazon for less than ~$200. This is where the story began.
+In order to replace my old [Netgear Readynas DUO v1](http://support.netgear.com/product/RND2000v1+$28ReadyNAS+Duo+v1$29), I spent a lot of time to choose the right NAS for home purpose. Synology NAS are great products but expensive if you need more than two disks. Few month ago I made a great deal buying a [HP n54l gen7](http://www8.hp.com/au/en/products/proliant-servers/product-detail.html?oid=6280789) on amazon for less than ~$200. This is where the story began.
 
 <!--more-->
 
 ## The beast
 
-This little homeserver have 4 disk trails (said as non hotplug but if you flash it with an unlocked feature bios you can make them hotplug - aka esata) and two pci-express expansion slots.
+This little homeserver has 4 disk trays (said as non hotplug but if you flash it with an unlocked feature bios you can make them hotplug - aka esata) and two pci-express expansion slots.
 
 <p align="center">
   <img src="/data/HP_Proliant_N54L_Inside.jpg" title="HP n54l" />
@@ -24,9 +24,9 @@ The interresting point is that there is a usb port on the mother board to if you
 
 ### Synology port / hack / whatever
 
-In the first stages, I tried to use the Synology OS (DSM) on it, I finaly manage to fake some controls calls in kernel and create my own DSM 4.3 booting system. This was fun and I've one of the first guy able to by pass their new protections. It was working quite good but updating is a pain as it could break my customs hooks. DSM is sounds pretty secure for an embeded OS as it checks if the hardware it's running on match the hardware it's suppose to run onto. If it fails, you can't use it as it will degrade your volume (basicaly delete /dev/sdx devices entries). The check is done by several parts in the system, maily on cgi scripts. Hacking in the cgi scripts is a pain as everything is offuscated and protected against disassembly/tracing by detecting debuggers:
+In the first stages, I tried to use the Synology OS (DSM) on it, I finaly manage to fake some contros calls in kernel and create my own DSM 4.3 booting system. This was fun and I'm one of the first guy able to bypass their new protections. It was working quite good but updating is a pain as it could break my customs hooks. DSM sounds pretty secure for an embeded OS as it checks if the hardware it's running on match the hardware it's suppose to run into. If it fails, you can't use it as it will degrade your volume (basicaly delete /dev/sdx devices entries). The check is done by several parts in the system, mainly on cgi scripts. Hacking in the cgi scripts is a pain as everything is offuscated and protected against disassembly/tracing by detecting debuggers:
 
-Try to attach a strace on a process give you this:
+Trying to attach a strace on a process gives you this:
 
 ```
 20954 19:03:31 [f6bf4c08] ptrace(PTRACE_TRACEME, 0, 0, 0) = -1 EPERM (Operation not permitted)
@@ -83,15 +83,15 @@ strace -e ptrace  -E LD_PRELOAD=/root/faketrace2.so ./ptrace
 +++ exited with 0 +++
 ```
 
-Using this method I found that these files are signed using Synology certificats and each file (process) is checking others, but the most interresting part is that it's also checking `/proc/bus/pci/devices` and compare the output to a list defined in the binary itself.
+Using this method I found that these files are signed using Synology certificates and each file (process) is checking others, but the most interresting part is that it's also checking `/proc/bus/pci/devices` and comparing the output to a list defined in the binary itself.
 
-The trick was to customise the kernel to respond fake read entries when a particular process tried to read certains files related to devices installed. Basically it involves kernel hooking and seq files (kernel [proc.c](https://github.com/torvalds/linux/blob/master/drivers/pci/proc.c#L421) to dispatch certains call from processes to a hand crafted [seq_file](https://www.kernel.org/doc/Documentation/filesystems/seq_file.txt)).
+The trick was to customize the kernel to return fake read entries when a particular process tried to read certains files related to devices installed. Basically it involves kernel hooking and seq files (kernel [proc.c](https://github.com/torvalds/linux/blob/master/drivers/pci/proc.c#L421) to dispatch certains call from processes to a hand crafted [seq_file](https://www.kernel.org/doc/Documentation/filesystems/seq_file.txt)).
 
 To find process accessing this `/proc/devices` I had to create a kooking module printing every process name trying to access this file.
 
-I also had to disassemble and edit a proprietary module and change some others things in the kernel tree. I will not provide the all the details and the methodoloy here but it worked. Synology provide the kernel source code (with lot of ifdef/ndef stripped away to male it almost impossible to compile).
+I also had to disassemble and edit a proprietary module and change some others things in the kernel tree. I will not provide all the details and the methodology here but it worked. Synology provides the kernel source code (with lot of ifdef/ndef stripped away to male it almost impossible to compile).
 
-DSM is quite a great system, the UI is really fancy and they are plenty of features and addons you can install. But I was not really confortable with running a hacked system in home production and beside that, running other applications directly next to the NAS services may not be a good idea and hardware support for a non genuine sylogoy is a pain (examplem I can't use usb port as it leads to kernel panic).
+DSM is quite a great system, the UI is really fancy and they are plenty of features and addons you can install. But I was not really confortable with running a hacked system in home production and beside that, running other applications directly next to the NAS services may not be a good idea and hardware support for a non genuine Synology is a pain (example: I can't use usb port as it leads to kernel panic).
 
 And at this time, I had to pack everything, because we were moving to California... so after almost one year, it's time to respin everything!
 
@@ -127,7 +127,7 @@ The most interresting thing about FreeBSD is the concept of [Jails](https://www.
 * **Security**: Each jail is sealed from the others, thus providing an additional level of security.
 * **Ease of delegation**: The limited scope of a jail allows system administrators to delegate several tasks which require superuser access without handing out complete control over the system.
 
-With latest FreeBSD release, a network virtualization layer as been added [vImage](https://wiki.freebsd.org/VIMAGE), basically it let you have in your jails a **full instance** of the host’s networking stack, including loopback interface, routing tables...
+With latest FreeBSD release, a network virtualization layer as been added [vImage](https://wiki.freebsd.org/VIMAGE), basically it lets you have in your jails a **full instance** of the host’s networking stack, including loopback interface, routing tables...
 
 In order give network to your jail, you will use [epair](https://www.freebsd.org/cgi/man.cgi?query=epair&sektion=4&manpath=FreeBSD+8.0-RELEASE) as a L2 back to back connected ethernet interfaces. One interface will be in your jail, the other one on your host (idealy member of a bridge if you plan to set several jails).
 
@@ -144,7 +144,7 @@ Plugins are great if you don't want to deal with your jails by hand but the cave
 
 This is where the fun is :)
 
-Jails are using templates, actually there is only two templates (before linux was a template but the support as been deprecated due to bugs and 32 bits limitation):
+Jails are using templates, actually there is only two templates (before linux was a template but the support has been deprecated due to bugs and 32 bits limitation):
 
 * Freebsd Jail - Basic FreeBSD jail
 * VirtualBox Jail - VirtualBox with phpVirtualBox frontend to virtualize linux/windows! Cool :)
@@ -190,7 +190,7 @@ Cli usage:
     zfsrevertsnap -  Revert jail to a snapshot
        zfsrmclone -  Remove a clone directory
 
-The interresting feature is import/export that let you create your jail on another system and let you deploy it to your freenas when ready.
+The interresting feature is import/export that lets you create your jail on another system and lets you deploy it to your freenas when ready.
 Unfortunately on Freenas 9.3 this feature is broken and should not be used anyway (explaination below).
 
 ## Freenas Installation
@@ -219,9 +219,9 @@ All the jails creation parameters are documentent [on the freenas doc](http://do
 
 This is how it works when you push the **create** button in the UI (more or less).
 
-The first time warden will download a template for the jail we want to create, this is done once. Afteward, and this is were it's clever, when you create a new jail., Warden does a snapshot of the plugin template dataset and then creates an individual plugin jails as ZFS clones of the template snapshot. When creating a new jail the UI will use warden with all paramters you set.
+The first time warden will download a template for the jail we want to create, this is done once. Afterwards, and this is were it's clever, when you create a new jail., Warden does a snapshot of the plugin template dataset and then creates an individual plugin jail as ZFS clone of the template snapshot. When creating a new jail the UI will use warden with all paramters you set.
 
-For entertainement purpose I split the creatins step below:
+For entertainement purpose I split the creation step below:
 
 ##### Creating a new jail from template:
 
@@ -304,7 +304,7 @@ You can easily see the origin for each jails and the most import part, the USED 
 
 #### SSH to your jail
 
-Something usefull is to enable ssh on your jail by editing the `/etc/rc.conf` and editing the ssh line to set to YES and change the hostname:
+It is useful to enable ssh on your jail by editing the `/etc/rc.conf` and editing the ssh line to set to YES and change the hostname:
 
 ```
 sshd_enable="YES"
@@ -327,7 +327,7 @@ Packagement management could done through [pkg or port](https://www.freebsd.org/
 * port tree if for building the package from source (gentoo/archlinux like)
 
 
-First update you jail using `pkg upgrade` and update the port tree `portsnap fetch extract update` then you can install some packages:
+First update your jail using `pkg upgrade` and update the port tree `portsnap fetch extract update` then you can install some packages:
 
 ```
 pkg install zsh tmux py27-virtualenv py27-virtualenvwrapper py27-pip
@@ -335,14 +335,14 @@ curl -L http://install.ohmyz.sh | sh
 chsh -s /usr/local/bin/zsh
 ```
 
-Now I fell like home :)
+Now I feel at home :)
 
 
 ### How to export/import my jails between systems
 
-That's a good point... but we can't use warden to do that because it's broken and doint things on the back of the UI is not a good idea... but we can find two other ways:
+That's a good point... but we can't use warden to do that because it's broken and doing things in the UI's back is not a good idea... but we can find two other ways:
 
-* Export the jail dataset using `zfs send / reveive` if you need to transfert existings jails. (warning if you transfert jails from clones you will have to transfert the origin snapshot as well)
+* Export the jail dataset using `zfs send / reveive` if you need to transfer existing jails. (warning if you transfer jails from clones you will have to transfer the origin snapshot as well)
 
 * Use the builtin template system (this is smarter especially if you need to deploy several jails afterward)
 
@@ -371,12 +371,12 @@ My up to date and custom jail is now ready, it could be great to use it as a bas
 For this you will have two choices to import your template:
 
 1. Deploy the tgz to a ftp or http server and add a new template ([using the UI](http://doc.freenas.org/9.3/freenas_jails.html#managing-jail-templates)) (this is the supported way)
-    Note: For an unknow reason this doesn't work using `python -m SimpleHTTPServer`, see [Bug #7811](https://bugs.freenas.org/issues/7811)
+    Note: For an unknow nreason this doesn't work using `python -m SimpleHTTPServer`, see [Bug #7811](https://bugs.freenas.org/issues/7811)
 
 2. Create a new template from your tar with `warden template create -tar base.tgz -nick custom_template`
-    * The trick to make it appears in the UI is to create a fake template entry using the **same name** as you set as nick (url could be wrong but not empty)
+    * The trick to make it appear in the UI is to create a fake template entry using the **same name** as you set as nick (url could be wrong but not empty)
 
-Your done! Create a new jail from your custom template (should be fast) and you can chack that your new jail **is** using the template.
+You're done! Create a new jail from your custom template (should be fast) and you can chack that your new jail **is** using the template.
 
 ```tcsh
 [root@freenas] /mnt/test/jails# zfs list -o origin,name,used,avail,refer,mountpoint
@@ -389,11 +389,11 @@ test/jails/.warden-template-custom_template@clean test/jails/new_jail_from_custo
 
 ## Media grabber installation
 
-In the previous chapter we save how to deploy a custom jail and how to mount (bind) a dataset to it. Now it's time for us to install every pieces of software needed in order to grab our favorite media.
+In the previous chapter we saw how to deploy a custom jail and how to mount (bind) a dataset to it. Now it's time for us to install every piece of software needed in order to grab our favorite media.
 
 ### Users and permissions
 
-One fondamental thing is to be coherent between the permissions on your dataset and the the permissions your process will run as in your jail.
+One fondamental thing is to be consistent between the permissions on your dataset and the permissions your process will run as in your jail.
 
 * Freenas side:
 
@@ -579,7 +579,7 @@ sysrc nginx_grabber_configfile="/usr/local/etc/nginx/grabber.conf"
 
 * Create your certificates for ssl
 
-For testing purpose we can deal with autosigned certs
+For testing purposes we can deal with autosigned certs
 
 ```tcsh
 mkdir -p /etc/ssl/{private,certs}
@@ -692,7 +692,7 @@ location /movies {
 }
 ```
 
-**Note 1:** If you are using a certificate chain be carefull to append the server cert first in the concatenated certs (cert, intermediate ca, ca). Don't forget to set `ssl_verify_depth x;` with x according to your certification chain depth.
+**Note 1:** If you are using a certificate chain be careful to append the server cert first in the concatenated certs (cert, intermediate ca, ca). Don't forget to set `ssl_verify_depth x;` with x according to your certification chain depth.
 
 **Note 2:** SSL CA are not provided by default by freebsd they can be install with the package `ca_root_nss`, don't forget to symlink it `ln -sf /usr/local/etc/ssl/cert.pem /etc/ssl/cert.pem` (could cause issue with python apps)
 
@@ -700,7 +700,7 @@ So basically the http traffic is only allowed from local network, ssl with clien
 
 We can't use both `ssl_verify_client` and `allow x.x.x.x/x` with `satisfy any` directive (nginx limitation). So we need to split them.
 
-For some services (like sonarr,couchpotatoe) you will have to set URL Base (in settings) in order to make it works with the reverse proxy.
+For some services (like sonarr,couchpotato) you will have to set URL Base (in settings) in order to make it work with the reverse proxy.
 
 Once everything respond using the reverse proxy, you can change every service to listen only on localhost (using UI of services or manualy).
 
