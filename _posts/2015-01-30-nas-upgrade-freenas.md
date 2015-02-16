@@ -553,6 +553,110 @@ sysrc couchpotato_enable="YES"
 sysrc couchpotato_user="media"
 ```
 
+**[Maraschino](https://github.com/mrkipling/maraschino.git)**
+
+Maraschino is a HTPC frontend written in python and it can integrate SabNzbd, Xbmc, CouchPotatoe and let you search for content in a nice frontend.
+
+```tcsh
+cd /grabbers && git clone https://github.com/mrkipling/maraschino.git
+chown -R media:media /grabbers/maraschino
+sysrc maraschino_enable="YES"
+sysrc maraschino_user="media"
+sysrc maraschino_dir="/grabbers/maraschino"
+sysrc maraschino_host="127.0.0.1"
+```
+
+Create a `/usr/local/etc/rc.d/maraschino` script as follow:
+
+```tcsh
+#!/bin/sh
+#
+# PROVIDE: maraschino
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# maraschino_enable (bool): Set to NO by default.
+#     Set it to YES to enable it.
+# maraschino_user:  The user account maraschino daemon runs as what
+#     you want it to be.
+# maraschino_dir: Directory where maraschino lives.
+#     Default: /usr/local/maraschino
+# maraschino_chdir:  Change to this directory before running maraschino.
+#     Default is same as maraschino_dir.
+# maraschino_pid:  The name of the pidfile to create.
+#     Default is maraschino.pid in maraschino_dir.
+# maraschino_port (int): The port where maraschino will listen to
+#     Default is 7000
+# maraschino_host (host): The ip/host where maraschino will listen to
+#     Default is 0.0.0.0
+
+. /etc/rc.subr
+
+name="maraschino"
+rcvar=${name}_enable
+
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+
+load_rc_config ${name}
+
+: ${maraschino_enable:="NO"}
+: ${maraschino_user:="USERNAME"}
+: ${maraschino_dir:="/usr/local/maraschino"}
+: ${maraschino_chdir:="${maraschino_dir}"}
+: ${maraschino_pid:="${maraschino_dir}/maraschino.pid"}
+: ${maraschino_port:="7000"}
+: ${maraschino_host:="0.0.0.0"}
+
+pidfile="${maraschino_dir}/maraschino.pid"
+
+status_cmd="${name}_status"
+stop_cmd="${name}_stop"
+
+command="/usr/sbin/daemon"
+
+# extra args
+if [ -n "${maraschino_port}" ]; then
+    maraschino_args="${maraschino_args} --port=${maraschino_port}"
+fi
+
+if [ -n "${maraschino_host}" ]; then
+    maraschino_args="${maraschino_args} --host=${maraschino_host}"
+fi
+
+command_args="-f -p ${maraschino_pid} python ${maraschino_dir}/Maraschino.py ${maraschino_args}"
+
+# Ensure user is root when running this script.
+if [ `id -u` != "0" ]; then
+  echo "Oops, you should be root before running this!"
+  exit 1
+fi
+
+verify_maraschino_pid() {
+    # Make sure the pid corresponds to the Maraschino process.
+    pid=`cat ${maraschino_pid} 2>/dev/null`
+    ps -p ${pid} | grep -q "python ${maraschino_dir}/Maraschino.py"
+    return $?
+}
+
+maraschino_stop() {
+    echo "Stopping $name"
+    verify_maraschino_pid
+  maraschino_pid=`ps -U ${maraschino_user} | grep "python.*Maraschino.py.*--daemon" | grep -v 'grep' | awk '{print $1}'`
+    if [ -n "${pid}" ]; then
+        kill ${pid}
+    fi
+}
+
+maraschino_status() {
+    verify_maraschino_pid && echo "$name is running as ${pid}" || echo "$name is not running"
+}
+
+run_rc_command "$1"
+```
+
+
 ### Check if everything is running fine
 To see if everything is running fine you can use the `sockstat` command
 
@@ -562,6 +666,7 @@ USER     COMMAND    PID   FD PROTO  LOCAL ADDRESS         FOREIGN ADDRESS
 media    python2.7  9221  7  tcp4   *:8080                *:*
 media    python2.7  6044  50 tcp4   *:5050                *:*
 media    mono-sgen  3921  12 tcp4   *:8989                *:*
+media    python2.7  6044  50 tcp4   *:7000                *:*
 ```
 
 ## Access to our grabbers
@@ -675,6 +780,11 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Host $host;
 proxy_set_header X-Forwarded-Server $host;
 
+# Maraschino
+location / {
+    proxy_pass http://127.0.0.1:7000/;
+    proxy_redirect default;
+}
 # sabnzbd
 location /sab {
     proxy_pass http://127.0.0.1:8080/sabnzbd;
@@ -708,7 +818,19 @@ Once everything respond using the reverse proxy, you can change every service to
 *   CouchPotatoe: Adding `host = 127.0.0.1` in `/grabbers/CouchPotatoServer/data/settings.conf`
 *   Sonarr: Using UI to change both base url / listening IP
 
+## Say Bonjour to your jails
 
+One usefull thing is to be able to resolve your jails using their hostname and the `.local` suffix. In order to do so you just need ton install the `mDNSResponder` package and activate it.
+
+```tcsh
+pkg install mDNSResponder mDNSResponder_nss
+sysrc mdnsd_enable="YES"
+service mdnsd start
+```
+
+And edit your `/etc/nsswitch.conf` to add `mdns` entry between `files` and `dns` for `hosts` entry.
+
+You should be able to acces your jail using `HOSTNAME.local` but also access other devices from your jail like `openelec.local`
 
 TODO:
 dns update
